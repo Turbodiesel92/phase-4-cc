@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, make_response, jsonify, request
+from flask import Flask, make_response, jsonify, request, abort
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 
@@ -61,16 +61,45 @@ class RestaurantById(Resource):
             200
         )
 
+    def delete(self, id):
+        restaurant = Restaurant.query.filter_by(di=id).first()
+        if not restaurant:
+            abort(404, 'The Restaurant you are trying to delete was not found!')
+
+            db.session.delete(restaurant)
+            db.session.commit()
+
+            response = make_response('', 204)
+
+            return response
+
 api.add_resource(RestaurantById, '/restaurants/<int:id>')
 
 
-# class RestaurantPizza(Resource):
-#     def post(self):
-#         try:
-#             new_restaurant_pizza = RestaurantPizza(
+class RestaurantPizzas(Resource):
+    def post(self):
+        try:
+            new_restaurant_pizza = RestaurantPizza(
+                price=request.get_json()['price'],
+                pizza_id=request.get_json()['pizza_id'],
+                restaurant_id=request.get_json()['restaurant_id']
+            )
 
-#             )
+            db.session.add(new_restaurant_pizza)
+            db.session.commit()
+
+            restaurant_pizza_dict = new_restaurant_pizza.to_dict(rules=('restaurant_pizzas',))
+
+            return make_response(
+                jsonify(restaurant_pizza_dict),
+                201
+            )
+        except:
+            return make_response({'error': "Invalid input"}, 400)
+
+api.add_resource(RestaurantPizzas, '/restaurant_pizzas')
 
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
