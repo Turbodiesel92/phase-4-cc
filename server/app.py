@@ -51,27 +51,56 @@ class RestaurantById(Resource):
     def get(self, id):
         restaurant = Restaurant.query.filter(Restaurant.id == id).first()
 
-        if not restaurant:
-            return make_response({'error': "Restaurant not found"},404)
+    #     if not restaurant:
+    #         return make_response({'error': "Restaurant not found"},404)
 
-        restaurant_dict = restaurant.to_dict()
+    #     restaurant_dict = restaurant.to_dict()
 
-        return make_response(
-            jsonify(restaurant_dict),
-            200
-        )
+    #     return make_response(
+    #         jsonify(restaurant_dict),
+    #         200
+    #     )
 
-    def delete(self, id):
-        restaurant = Restaurant.query.filter_by(di=id).first()
-        if not restaurant:
-            abort(404, 'The Restaurant you are trying to delete was not found!')
+    # def delete(self, id):
+    #     restaurant = Restaurant.query.filter_by(id=id).first()
+    #     if not restaurant:
+    #         abort(404, 'The Restaurant you are trying to delete was not found!')
 
-            db.session.delete(restaurant)
-            db.session.commit()
+    #     db.session.delete(restaurant)
+    #     db.session.commit()
 
-            response = make_response('', 204)
+    #     response = make_response('', 204)
 
-            return response
+    #     return response
+
+        if restaurant:
+
+            if request.method == 'GET':
+
+                restaurant_dict = restaurant.to_dict()
+
+                response = make_response(
+                    jsonify(restaurant_dict),
+                    200
+                )
+
+            elif request.method == 'DELETE':
+
+                db.session.delete(restaurant)
+                db.session.commit()
+
+                response = make_response(
+                    {},
+                    200
+                )
+        else:
+
+            response = make_response(
+                { 'error': 'Restaurant not fund' },
+                404
+            )
+
+        return response
 
 api.add_resource(RestaurantById, '/restaurants/<int:id>')
 
@@ -88,14 +117,21 @@ class RestaurantPizzas(Resource):
             db.session.add(new_restaurant_pizza)
             db.session.commit()
 
-            restaurant_pizza_dict = new_restaurant_pizza.to_dict(rules=('restaurant_pizzas',))
+            # restaurant_pizza_dict = new_restaurant_pizza.to_dict(rules=('restaurant_pizzas',))
+            # restaurant_pizza_dict = Pizza.query.filter(Pizza.id == new_restaurant_pizza.pizza_id).first().to_dict()
+
+            associated_pizza = Pizza.query.filter(Pizza.id == new_restaurant_pizza.pizza_id).first()
+            associated_pizza_dict = associated_pizza.to_dict()
 
             return make_response(
-                jsonify(restaurant_pizza_dict),
+                jsonify(associated_pizza_dict),
                 201
             )
         except:
-            return make_response({'error': "Invalid input"}, 400)
+            return make_response(
+                { 'error': ["Validation errors"] },
+                400
+            )
 
 api.add_resource(RestaurantPizzas, '/restaurant_pizzas')
 
